@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install: 
+  - docker build -t imvsharma/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true imvsharma/react-test npm test -- --coverage
+
+after_success: 
+  - docker build -t imvsharma/multi-client ./client
+  - docker build -t imvsharma/multi-nginx ./nginx
+  - docker build -t imvsharma/multi-server ./server
+  - docker build -t imvsharma/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take above build images and push to docker hub
+  - docker push imvsharma/multi-client
+  - docker push imvsharma/multi-nginx
+  - docker push imvsharma/multi-server
+  - docker push imvsharma/multi-worker
